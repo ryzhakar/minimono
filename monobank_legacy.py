@@ -1,19 +1,21 @@
-import requests, json, os
-from dotenv import load_dotenv
+import requests
+import json
+from os import environ
 from time import time
 from math import floor
 
+from dotenv import load_dotenv
+
 load_dotenv()
-try:
-    mono_token = os.environ.get('mono_token')
-except KeyError:
-    pass
+mono_token = environ.get('mono_token')
 
 def_currency = 980
 def_type = 'black'
 jan01_2018 = 1514757600
 
-
+# Will cut it to separate files later
+# Hence non-primary imports
+from monobank.api_call import monocall
 class MonoCardStat:
     def __init__(self, token, cdcurrency=def_currency, cdtype=def_type, fromdate=(floor(time()) - 2682000), todate=floor(time())):
         if todate - fromdate > 2682000:
@@ -30,21 +32,13 @@ class MonoCardStat:
         self.stat = {}
     
     def personal_info(self):
-        url = 'https://api.monobank.ua/personal/client-info'
-        headers = {
-            'X-Token': self.token
-        }
-        response = requests.request("GET", url, headers=headers)
-        print('personal info -', response.status_code)
+        response = monocall(self.token, 'client-info')
+        print('personal info -', response.raise_for_status())
 
         return response.json()
 
     def get_statement(self):
-        url = f'https://api.monobank.ua/personal/statement/{self.account}/{self.fromdate}/{self.todate}'
-        headers = {
-            'X-Token': self.token
-        }
-        response = requests.request("GET", url, headers=headers)
+        response = monocall(self.token, f'statement/{self.account}/{self.fromdate}/{self.todate}')
         print('getting statement -', response.raise_for_status())
 
         return response.json()
