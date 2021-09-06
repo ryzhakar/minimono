@@ -45,3 +45,21 @@ class Client:
 		response = monocall(self.token, 'client-info')
 		print('personal info -', response.raise_for_status())
 		return response.json()
+	
+class Statement:
+	def __init__(self, client_obj, account='default', fromdate=floor(time()) - 2682000, todate=floor(time())):
+		self.id = client_obj.accounts[account]
+		self.token = client_obj.token
+		self.unfo = client_obj.__str__()
+		self.fromdate = fromdate
+		self.todate = todate
+		self.raw = self.get_statement()
+
+	def __str__(self):
+		expenses = abs(sum([n["operationAmount"] for n in self.raw if n["operationAmount"] < 0]))/100
+		return f'{self.unfo} spent {expenses} UAH in this timeframe.'
+	
+	def get_statement(self):
+		response = monocall(self.token, f'statement/{self.id}/{self.fromdate}/{self.todate}')
+		print('getting statement -', response.raise_for_status())
+		return response.json()
