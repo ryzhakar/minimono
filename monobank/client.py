@@ -1,19 +1,21 @@
-from api_call import monocall
 from time import time
 from math import floor
-#from dotenv import load_dotenv
-#load_dotenv()
-mono_token = environ.get('mono_oken')
+from os import environ
+from dotenv import load_dotenv
+from monobank.api_call import monocall
+load_dotenv()
+mono_token = environ.get('mono_token')
 
 curr_code = {
 	980: 'UAH',
-	940: 'USD',
+	840: 'USD',
 	978: 'EUR',
 	985: 'PLN'
 }
 
-card_type = ['black', 'white', 'platinum',
-			'iron', 'fop', 'yellow']
+# In descending order of main-account probability.
+card_type = ['iron', 'platinum', 'black',
+			'white', 'fop', 'yellow']
 
 class Client:
 	def __init__(self, token):
@@ -26,6 +28,10 @@ class Client:
 		tps = list(set([n['type'] for n in accounts]))
 		for ctp in tps:
 			self.accounts[ctp] = dict([(curr_code[n['currencyCode']], n['id']) for n in accounts if n['type'] == ctp])
+		for tp in card_type[:3]:
+			if tp in self.accounts.keys():
+				self.accounts['default'] = self.accounts[tp]['UAH']
+				break		
 		# Webhook
 		if 'webHookUrl' in self.raw_info.keys():
 			self.webhook = self.raw_info['webHookUrl']
@@ -36,8 +42,6 @@ class Client:
 		return self.raw_info['name']
 
 	def personal_info(self):
-        response = monocall(self.token, 'client-info')
-        print('personal info -', response.raise_for_status())
-
-
-        return response.json()
+		response = monocall(self.token, 'client-info')
+		print('personal info -', response.raise_for_status())
+		return response.json()
