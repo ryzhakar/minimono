@@ -3,6 +3,7 @@ from math import floor
 from os import environ
 from dotenv import load_dotenv
 from monobank.api_call import monocall
+from monobank.exceptions import EmptyStatement, WrongObject
 load_dotenv()
 mono_token = environ.get('mono_token')
 
@@ -17,7 +18,7 @@ curr_code = {
 card_type = ['iron', 'platinum', 'black',
 			'white', 'fop', 'yellow']
 
-class Client:
+class Base:
 	def __init__(self, token):
 		# Token and raw API personal response.
 		self.token = token
@@ -47,19 +48,28 @@ class Client:
 		return response.json()
 	
 class Statement:
-	def __init__(self, client_obj, account='default', fromdate=floor(time()) - 2682000, todate=floor(time())):
-		self.id = client_obj.accounts[account]
-		self.token = client_obj.token
-		self.unfo = client_obj.__str__()
-		self.fromdate = fromdate
-		self.todate = todate
-		self.raw = self.get_statement()
+	def __init__(self, base_obj, account='default', fromdate=floor(time()) - 2682000, todate=floor(time())):
+		if todate-fromdate > 2682000 or todate-fromdate <= 0:
+			raise ValueError("Time period between 'todate' and 'fromdate' should be in 1-2682000 secods range.")
+		if not ('accounts' in base_obj.__dict__.keys() and 'token' in base_obj.__dict__.keys()):
+			raise WrongObject("Instance of the Base class is expected: recieved wrong object.")
+		self.id = base_obj.accounts[account]
+		self.token = base_obj.token
+		self.unfo = base_obj.__str__()
+		self.timeframe = (fromdate, todate)
+		try:
+			self.raw = self.get_statement(fromdate=fromdate, todate=todate)
+		except EmptyStatement:
+			self.raw = [{'operationAmount': 0}]
 
 	def __str__(self):
-		expenses = abs(sum([n["operationAmount"] for n in self.raw if n["operationAmount"] < 0]))/100
+		expenses = abs(sum([n["operationAmount"] for n in self.raw if n["operationAmount"] <= 0]))/100
 		return f'{self.unfo} spent {expenses} UAH in this timeframe.'
 	
-	def get_statement(self):
-		response = monocall(self.token, f'statement/{self.id}/{self.fromdate}/{self.todate}')
+	def get_statement(self, fromdate=floor(time()) - 2682000, todate=floor(time())):
+		response = monocall(self.token, f'statement/{self.id}/{fromdate}/{todate}')
 		print('getting statement -', response.raise_for_status())
+
+		if not bool(response.json()):
+			raise EmptyStatement("No transactions in this timeframe.")
 		return response.json()
