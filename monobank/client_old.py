@@ -5,8 +5,8 @@ from math import floor
 from os import environ
 from dotenv import load_dotenv
 
-from monobank.api_call import monocall
-from monobank.exceptions import EmptyStatement, WrongObject
+from API.api_call import monocall
+from API.exceptions import EmptyStatement, WrongObject
 
 load_dotenv()
 mono_token = environ.get('mono_token')
