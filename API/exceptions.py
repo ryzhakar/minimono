@@ -4,7 +4,11 @@ class RateLimited(Exception):
 class NotFound(Exception):
     pass
 
+class BadRequest(Exception):
+    pass
+
 ERRORS = {
     404: NotFound,
     429: RateLimited,
+    400: BadRequest
 }

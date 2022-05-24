@@ -7,6 +7,7 @@ class CardType(str, Enum):
     iron = "iron"
     fop = "fop"
     yellow = "yellow"
+    eAid = "eAid"
 
 class CashbackType(str, Enum):
     none = "None"

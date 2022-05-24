@@ -1,7 +1,7 @@
 from typing import Any, Sequence
 from datetime import datetime, timedelta
 from pydantic import BaseModel, AnyHttpUrl, Field, root_validator
-from enumerators import CardType, CashbackType
+from .enumerators import CardType, CashbackType
 from typing import Optional
 
 def month_ago():
@@ -16,6 +16,15 @@ class Account(BaseModel):
     type: CardType
     currencyCode: int
     cashbackType: CashbackType
+
+class Jar(BaseModel):
+    id: str
+    sendId: str
+    title: str
+    currencyCode: int
+    balance: int
+    description: Optional[str] = None
+    goal: Optional[int] = None
 
 class Transaction(BaseModel):
     id: str
@@ -35,10 +44,16 @@ class Transaction(BaseModel):
     counterIban: Optional[str] = None
 
 class UserInfoResp(BaseModel):
-    id: str
+    class Config:
+        extra='ignore'
+    
+    clientId: str
     name: str
-    webHookURL: AnyHttpUrl
     accounts: Sequence[Account]
+    jars: Sequence[Jar]
+    webHookURL: Optional[AnyHttpUrl] = None
+    permissions: Optional[str] = None
+
 
 class StatementResp(BaseModel):
     statement_items: Sequence[Transaction]
@@ -55,7 +70,7 @@ class CurrInfoResp(BaseModel):
     rates: Sequence[CurrencyInfo]
 
 class HeadersPrivate(BaseModel):
-    x_token: str
+    x_token: str = Field(alias="X-Token", title="X-Token")
 
 class StatementPath(BaseModel):
     account: str
@@ -79,7 +94,7 @@ class StatementPath(BaseModel):
         return f'/personal/statement/{ac}/{fr}/{to}'
 
 class UserInfoPath:
-    
+
     @staticmethod
     def get_path_tail():
         return '/personal/client-info'

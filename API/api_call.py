@@ -5,27 +5,27 @@ from .exceptions import ERRORS
 
 
 class MonoCaller:
-    base_url = f'https://api.monobank.ua'
+
+    base_url = 'https://api.monobank.ua'
     request_response = {
         "CurrRatePath": CurrInfoResp,
         "UserInfoPath": UserInfoResp,
-        "StatementPath": StatementResp
+        "StatementPath": StatementResp,
     }
 
     def __init__(self, token: str):
-        self.headers = HeadersPrivate(x_token=token)
+        self.headers = HeadersPrivate.parse_obj({"X-Token": token})
 
-    def get_request(self, path_obj=None) -> BaseModel:
-        url = self.__class__.base_url
-        path_name = path_obj.__class__.__name__
-        response_model = self.__class__.request_response['path_name']
+    def get_request(self, path_obj) -> BaseModel:
+        url = self.__class__.base_url + path_obj.get_path_tail()
+        path_obj_name = path_obj.__class__.__name__
+        response_model = self.__class__.request_response[path_obj_name]
 
-        if path_obj:
-            url += path_obj.get_path_tail()
-        headers = self.headers.__dict__
+
+        headers = self.headers.dict(by_alias=True)
         response = requests.request("GET", url, headers=headers)
         if response.status_code != 200:
-            raise ERRORS[response.status_code]
+            raise ERRORS[response.status_code](response.json())
 
-        modeled = response_model.parse_raw(response.json())
+        modeled = response_model.parse_obj(response.json())
         return modeled
