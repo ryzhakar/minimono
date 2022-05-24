@@ -1,7 +1,7 @@
 from typing import Any, Sequence
 from datetime import datetime, timedelta
 from pydantic import BaseModel, AnyHttpUrl, Field, root_validator
-from .enumerators import CardType, CashbackType, Currency
+from enumerators import CardType, CashbackType
 from typing import Optional
 
 def month_ago():
@@ -14,7 +14,7 @@ class Account(BaseModel):
     balance: int
     creditLimit: int
     type: CardType
-    currencyCode: Currency
+    currencyCode: int
     cashbackType: CashbackType
 
 class Transaction(BaseModel):
@@ -25,7 +25,7 @@ class Transaction(BaseModel):
     hold: bool
     amount: int
     operationAmount: int
-    currencyCode: Currency
+    currencyCode: int
     commissionRate: int
     cashbackAmount: int
     balance: int
@@ -44,8 +44,8 @@ class StatementResp(BaseModel):
     statement_items: Sequence[Transaction]
 
 class CurrencyInfo(BaseModel):
-    currencyCodeA: Currency
-    currencyCodeB: Currency
+    currencyCodeA: int
+    currencyCodeB: int
     date: datetime
     rateSell: float
     rateBuy: float
@@ -62,7 +62,7 @@ class StatementPath(BaseModel):
     from_: datetime = Field(default_factory=month_ago)
     to_: datetime = Field(default_factory=datetime.now)
 
-    @root_validator(always=True)
+    @root_validator
     def check_timedelta(cls, values):
         fr = values['from_']
         to = values['to_']
@@ -79,13 +79,13 @@ class StatementPath(BaseModel):
         return f'/personal/statement/{ac}/{fr}/{to}'
 
 class UserInfoPath:
-    path = '/personal/client-info'
-
-    def get_path_tail(self):
-        return self.__class__.path
+    
+    @staticmethod
+    def get_path_tail():
+        return '/personal/client-info'
 
 class CurrRatePath:
-    path = '/bank/currency'
 
-    def get_path_tail(self):
-        return self.__class__.path
+    @staticmethod
+    def get_path_tail():
+        return '/bank/currency'

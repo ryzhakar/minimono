@@ -1,5 +1,4 @@
 from enum import Enum
-from iso4217 import Currency
 
 class CardType(str, Enum):
     black = "black"
