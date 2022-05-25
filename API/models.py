@@ -1,23 +1,16 @@
-from typing import Any, Sequence
+from typing import Any, Sequence, Union
 from datetime import datetime, timedelta
 from pydantic import BaseModel, AnyHttpUrl, Field, root_validator
 from .enumerators import CardType, CashbackType
 from typing import Optional
 
-def default_timeframe():
-    tmfr = {
-        "from_": datetime.now(),
-        "to_": datetime.now() - timedelta(seconds=2682000.0)
-    }
-    return tmfr
-
-class Account(BaseModel):
-    id: str
-    balance: int
-    creditLimit: int
-    type: CardType
-    currencyCode: int
-    cashbackType: CashbackType
+def default_timeframe(end_date: Optional[datetime]=None):
+    if end_date is None:
+        end_date =  datetime.now()
+    fr = end_date,
+    to = datetime.now() - timedelta(seconds=2682000.0)
+    
+    return fr, to
 
 class Jar(BaseModel):
     id: str
@@ -45,20 +38,33 @@ class Transaction(BaseModel):
     counterEdrpou: Optional[str] = None
     counterIban: Optional[str] = None
 
+class StatementResp(BaseModel):
+    statement_items: Sequence[Transaction]
+
+class Account(BaseModel):
+    id: str
+    balance: int
+    creditLimit: int
+    type: CardType
+    currencyCode: int
+    cashbackType: CashbackType
+
+class ActionableAccount(Account):
+    def getStatement(self, engine_instance, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> StatementResp:        
+        return engine_instance.make_request(StatementReq(account=self.id, from_=start_date, to_=end_date))
+
+
 class UserInfoResp(BaseModel):
     class Config:
         extra='ignore'
     
     clientId: str
     name: str
-    accounts: Sequence[Account]
+    accounts: Sequence[ActionableAccount]
     jars: Sequence[Jar]
     webHookURL: Optional[AnyHttpUrl] = None
     permissions: Optional[str] = None
 
-
-class StatementResp(BaseModel):
-    statement_items: Sequence[Transaction]
 
 class CurrencyInfo(BaseModel):
     currencyCodeA: int
@@ -76,23 +82,30 @@ class HeadersPrivate(BaseModel):
 
 class StatementReq(BaseModel):
     account: str
-    from_: datetime
-    to_: datetime
-    
+    from_: Union[datetime, None] = None
+    to_: Union[datetime, None] = None
+
     @root_validator
-    def check_timedelta(cls, values):
+    def check_timeframe(cls, values):
         fr = values['from_']
         to = values['to_']
-        delta = to - fr
-        valid_timeframe = int(delta.total_seconds()) > 0 and not int(delta.total_seconds()) > 2682000
-        if not valid_timeframe:
-            values['from_'] = to - timedelta(seconds=2682000)
+        
+        if values['to_'] is None:
+            values['from_'], values['to_'] = default_timeframe()
+        else:
+            if values['from_'] is None:
+                values['from_'], values['to_'] = default_timeframe(end_date=values['to_'])
+            else:
+                delta = values['to_'] - values['from_']
+                valid_timeframe = int(delta.total_seconds()) > 0 and not int(delta.total_seconds()) > 2682000
+                if not valid_timeframe:
+                    values['from_'] = to - timedelta(seconds=2682000)
 
         return values
     
     def get_path_tail(self):
-        fr = str(int(self.from_.timestamp()))
-        to = str(int(self.to_.timestamp()))
+        fr = str(int(self.from_.timestamp())) # type: ignore
+        to = str(int(self.to_.timestamp())) # type: ignore
         ac = self.account
         return f'/personal/statement/{ac}/{fr}/{to}'
 
