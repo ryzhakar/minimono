@@ -80,7 +80,8 @@ class StatementReq(BaseModel):
         fr = values['from_']
         to = values['to_']
         delta = to - fr
-        if int(delta.total_seconds()) > 2682000:
+        valid_timeframe = int(delta.total_seconds()) > 0 and not int(delta.total_seconds()) > 2682000
+        if not valid_timeframe:
             values['from_'] = to - timedelta(seconds=2682000)
 
         return values
