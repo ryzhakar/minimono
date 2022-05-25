@@ -5,9 +5,7 @@ from .enumerators import CardType, CashbackType
 from typing import Optional
 
 def month_ago():
-    dt = datetime.now()
-    dt = int(dt.timestamp())
-    return dt - 2682000
+    return datetime.now() - timedelta(seconds=2682000.0)
 
 class Account(BaseModel):
     id: str
@@ -38,8 +36,8 @@ class Transaction(BaseModel):
     commissionRate: int
     cashbackAmount: int
     balance: int
-    receiptId: str
-    comment: Optional[int]
+    receiptId: Optional[str] = None
+    comment: Optional[int] = None
     counterEdrpou: Optional[str] = None
     counterIban: Optional[str] = None
 
@@ -62,9 +60,9 @@ class CurrencyInfo(BaseModel):
     currencyCodeA: int
     currencyCodeB: int
     date: datetime
-    rateSell: float
-    rateBuy: float
-    rateCross: float
+    rateSell: Optional[float] = None
+    rateBuy: Optional[float] = None
+    rateCross: Optional[float] = None
 
 class CurrInfoResp(BaseModel):
     rates: Sequence[CurrencyInfo]
@@ -82,7 +80,7 @@ class StatementPath(BaseModel):
         fr = values['from_']
         to = values['to_']
         delta = to - fr
-        if not int(delta.total_seconds) <= 2682000:
+        if int(delta.total_seconds()) > 2682000:
             values['from_'] = to - timedelta(seconds=2682000)
 
         return values
