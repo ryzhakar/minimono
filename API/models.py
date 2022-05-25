@@ -4,8 +4,12 @@ from pydantic import BaseModel, AnyHttpUrl, Field, root_validator
 from .enumerators import CardType, CashbackType
 from typing import Optional
 
-def month_ago():
-    return datetime.now() - timedelta(seconds=2682000.0)
+def default_timeframe():
+    tmfr = {
+        "from_": datetime.now(),
+        "to_": datetime.now() - timedelta(seconds=2682000.0)
+    }
+    return tmfr
 
 class Account(BaseModel):
     id: str
@@ -72,9 +76,9 @@ class HeadersPrivate(BaseModel):
 
 class StatementReq(BaseModel):
     account: str
-    from_: datetime = Field(default_factory=month_ago)
-    to_: datetime = Field(default_factory=datetime.now)
-
+    from_: datetime
+    to_: datetime
+    
     @root_validator
     def check_timedelta(cls, values):
         fr = values['from_']
