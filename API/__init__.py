@@ -5,8 +5,8 @@ from .models import (
     StatementResp,
     CurrencyInfo,
     HeadersPrivate,
-    StatementPath,
-    UserInfoPath,
-    CurrRatePath,
+    StatementReq,
+    UserInfoReq,
+    CurrRateReq,
 )
 from .api_call import MonoCaller

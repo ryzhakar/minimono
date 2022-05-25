@@ -7,23 +7,23 @@ from .exceptions import ERRORS
 class MonoCaller:
 
     base_url = 'https://api.monobank.ua'
-    request_response = {
-        "CurrRatePath": lambda x: CurrInfoResp(rates=[CurrencyInfo.parse_obj(n) for  n in x]),
-        "UserInfoPath": lambda x: UserInfoResp.parse_obj(x),
-        "StatementPath": lambda x: StatementResp(statement_items=[Transaction.parse_obj(n) for n in x]),
+    corresponding_methods = {
+        "CurrRateReq": lambda x: CurrInfoResp(rates=[CurrencyInfo.parse_obj(n) for  n in x]),
+        "UserInfoReq": lambda x: UserInfoResp.parse_obj(x),
+        "StatementReq": lambda x: StatementResp(statement_items=[Transaction.parse_obj(n) for n in x]),
     }
 
     def __init__(self, token: str):
         self.headers = HeadersPrivate.parse_obj({"X-Token": token})
 
-    def get_request(self, path_obj) -> BaseModel:
-        """Performs a request, specified via :path_obj:.
+    def get_request(self, request_obj) -> BaseModel:
+        """Performs a request, specified via :request_obj:.
         Returns a model-encapsulated response object.
         """
 
-        url = self.__class__.base_url + path_obj.get_path_tail()
-        path_obj_name = path_obj.__class__.__name__
-        response_method = self.__class__.request_response[path_obj_name]
+        url = self.__class__.base_url + request_obj.get_path_tail()
+        request_obj_name = request_obj.__class__.__name__
+        response_method = self.__class__.corresponding_methods[request_obj_name]
 
         headers = self.headers.dict(by_alias=True)
         response = requests.request("GET", url, headers=headers)

@@ -70,7 +70,7 @@ class CurrInfoResp(BaseModel):
 class HeadersPrivate(BaseModel):
     x_token: str = Field(alias="X-Token", title="X-Token")
 
-class StatementPath(BaseModel):
+class StatementReq(BaseModel):
     account: str
     from_: datetime = Field(default_factory=month_ago)
     to_: datetime = Field(default_factory=datetime.now)
@@ -91,13 +91,13 @@ class StatementPath(BaseModel):
         ac = self.account
         return f'/personal/statement/{ac}/{fr}/{to}'
 
-class UserInfoPath:
+class UserInfoReq:
 
     @staticmethod
     def get_path_tail():
         return '/personal/client-info'
 
-class CurrRatePath:
+class CurrRateReq:
 
     @staticmethod
     def get_path_tail():
