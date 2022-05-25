@@ -10,3 +10,4 @@ from .models import (
     CurrRateReq,
 )
 from .api_call import MonoCaller
+from .client import Client

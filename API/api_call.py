@@ -16,7 +16,7 @@ class MonoCaller:
     def __init__(self, token: str):
         self.headers = HeadersPrivate.parse_obj({"X-Token": token})
 
-    def get_request(self, request_obj) -> BaseModel:
+    def make_request(self, request_obj) -> BaseModel:
         """Performs a request, specified via :request_obj:.
         Returns a model-encapsulated response object.
         """
