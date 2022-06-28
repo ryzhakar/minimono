@@ -41,6 +41,17 @@ class Transaction(BaseModel):
 class StatementResp(BaseModel):
     statement_items: Sequence[Transaction]
 
+    def getReduced(self) -> Sequence[dict]:
+        """Get a statement with reduced dimensionality."""
+
+        return [{
+            "id": item.id,
+            "time": item.time,
+            "description": item.description,
+            "mcc": item.mcc,
+            "amount": item.amount,
+        } for item in self.statement_items]
+
 class Account(BaseModel):
     id: str
     balance: int
