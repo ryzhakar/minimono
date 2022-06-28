@@ -34,7 +34,7 @@ class Transaction(BaseModel):
     cashbackAmount: int
     balance: int
     receiptId: Optional[str] = None
-    comment: Optional[int] = None
+    comment: Optional[str] = None
     counterEdrpou: Optional[str] = None
     counterIban: Optional[str] = None
 
