@@ -11,6 +11,7 @@ class Client:
 
         self.engine = caller_class(token)
         self.user = self.engine.make_request(UserInfoReq())
+        self.accounts = self.user.accounts
 
     def refreshUser(self):
         """Refresh user info."""
@@ -19,5 +20,10 @@ class Client:
 
     def getRates(self) -> CurrInfoResp:
         """Get currency rates."""
+
         return self.engine.make_request(CurrRateReq())
-    
+
+    def availableAccounts(self) -> list:
+        """Get available accounts."""
+
+        return [x[0] for x in list(self.user.accounts.dict().items()) if x[1] is not None]
