@@ -7,6 +7,9 @@ class NotFound(Exception):
 class BadRequest(Exception):
     pass
 
+class TimeConstraintError(Exception):
+    pass
+
 ERRORS = {
     404: NotFound,
     429: RateLimited,

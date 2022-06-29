@@ -2,15 +2,35 @@ from typing import Any, Sequence, Union
 from datetime import datetime, timedelta
 from pydantic import BaseModel, AnyHttpUrl, Field, root_validator, validator
 from .enumerators import CardType, CashbackType
+from .exceptions import BadRequest, TimeConstraintError, RateLimited
 from typing import Optional
+from time import sleep
+from random import uniform
 
 def default_timeframe(end_date: Optional[datetime]=None):
     if end_date is None:
         end_date =  datetime.now()
     to = end_date
     fr = datetime.now() - timedelta(seconds=2682000.0)
+
+    if datetime(2017, 10, 1) > fr:
+        raise TimeConstraintError('The oldest data API can provide is from 2017-10-01')
     
     return fr, to
+
+def generate_timeframe_list(fr: datetime = datetime(2017, 10, 1), to: datetime = datetime.now()) -> Sequence[Sequence[datetime]]:
+    """Returns a list of datetime pairs for timeframes."""
+
+    timeframe_list = list()
+    temp = to - timedelta(days=31)
+    while temp > fr:
+            timeframe_list.append((temp, to))
+            to = temp
+            temp -= timedelta(days=31)
+
+    timeframe_list.append((fr, to))
+    return timeframe_list
+    
 
 class Jar(BaseModel):
     id: str
@@ -38,19 +58,30 @@ class Transaction(BaseModel):
     counterEdrpou: Optional[str] = None
     counterIban: Optional[str] = None
 
+    def getReduced(self) -> dict:
+        """Get a reduced transaction."""
+
+        return {
+            "id": self.id,
+            "time": self.time,
+            "description": self.description,
+            "mcc": self.mcc,
+            "amount": self.amount,
+        }
+
 class StatementResp(BaseModel):
-    statement_items: Sequence[Transaction]
+    statement_items: Sequence[Transaction] = list()
 
-    def getReduced(self) -> Sequence[dict]:
-        """Get a statement with reduced dimensionality."""
+    def __add__(self, other: Any) -> 'StatementResp':
+        """Add two statements."""
+        
+        return StatementResp(statement_items=self.statement_items + other.statement_items)
 
-        return [{
-            "id": item.id,
-            "time": item.time,
-            "description": item.description,
-            "mcc": item.mcc,
-            "amount": item.amount,
-        } for item in self.statement_items]
+    def to_dict(self) -> dict:
+        """Returns a dictionary with Transaction ids as keys and Transaction objects as values."""
+
+        return {item.id: item for item in self.statement_items}
+    
 
 class Account(BaseModel):
     id: str
@@ -61,8 +92,31 @@ class Account(BaseModel):
     cashbackType: CashbackType
 
 class ActionableAccount(Account):
-    def getStatement(self, engine_instance, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> StatementResp:        
-        return engine_instance.make_request(StatementReq(account=self.id, from_=start_date, to_=end_date))
+    
+    def getStatement(
+        self,
+        engine_instance,
+        fr: datetime = datetime(2017, 10, 1),
+        to: datetime = datetime.now()
+        ) -> StatementResp:
+        """Get the statement between dates."""
+
+        reqs = [
+            StatementReq(account=self.id, from_=x[0], to_=x[1])
+            for x in generate_timeframe_list()
+            ]
+
+        print(f"{len(reqs)} requests to be made", sep='', end='')
+        whole_statement = StatementResp()
+        for req in reqs:
+            try:
+                consequent_month = engine_instance.make_request(req)
+                print('-', sep='', end='')
+                whole_statement = consequent_month + whole_statement
+                sleep(uniform(60, 65))
+            except BadRequest:
+                break
+        return whole_statement
 
 class MultipleAccounts(BaseModel):
     black: Union[Account, None] = None
