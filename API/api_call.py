@@ -13,7 +13,10 @@ class MonoCaller:
     corresponding_methods = {
         "CurrRateReq": lambda x: CurrInfoResp(rates=[CurrencyInfo.parse_obj(n) for  n in x]),
         "UserInfoReq": lambda x: UserInfoResp.parse_obj(x),
-        "StatementReq": lambda x: StatementResp(statement_items=[Transaction.parse_obj(n) for n in x]),
+        "StatementReq": lambda x: StatementResp(
+            statement_items=[Transaction.parse_obj(n) for n in x],
+            timeframe=(x.from_, x.to_)
+            ),
     }
 
     def __init__(self, token: str):

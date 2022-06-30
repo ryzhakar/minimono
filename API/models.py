@@ -4,8 +4,15 @@ from pydantic import BaseModel, AnyHttpUrl, Field, root_validator, validator
 from .enumerators import CardType, CashbackType
 from .exceptions import BadRequest, TimeConstraintError, RateLimited
 from typing import Optional
-from time import sleep
-from random import uniform
+
+
+TIMEBLOCK = timedelta(days=31)
+
+def align_datetime(date: datetime, align: timedelta) -> datetime:
+    """Aligns a datetime to a certain timedelta."""
+
+    aligned_timestamp = date.timestamp() // TIMEBLOCK.total_seconds() * TIMEBLOCK.total_seconds()
+    return datetime.fromtimestamp(aligned_timestamp)
 
 
 def default_timeframe(end_date: Optional[datetime]=None):
@@ -63,10 +70,18 @@ class Transaction(BaseModel):
 
 class StatementResp(BaseModel):
     statement_items: Sequence[Transaction] = Field(default_factory=list)
+    timeframe: Sequence[datetime] = Field(default_factory=tuple)
+
+    @root_validator(pre=True)
+    def set_timeframe(cls, values: dict) -> dict:
+        """Deduce the timeframe from the transactions."""
+
+        values['timeframe'] = (values['statement_items'][0].time, values['statement_items'][-1].time)
+        return values
 
     def __add__(self, other: Any) -> 'StatementResp':
         """Add two statements."""
-        
+
         return StatementResp(statement_items=self.statement_items + other.statement_items)
 
     def __iter__(self) -> Iterator[Transaction]:
@@ -94,6 +109,40 @@ class Jar(BaseModel):
     goal: Optional[int] = None
 
 
+class StatementBucket(BaseModel):
+    """Statements with defined timeframe length for caching purposes."""
+
+    full: bool = False
+    timeframe: Sequence[datetime]
+    transactions: Sequence[Transaction] = Field(default_factory=list)
+
+    @validator("timeframe")
+    def align_timeframe(cls, v) -> Sequence[datetime]:
+        """Aligns the timeframe to the nearest timeblock."""
+
+        fr, to = v[0], v[1]
+        fr = align_datetime(fr, TIMEBLOCK)
+        to = (fr + TIMEBLOCK)
+        v = (fr, to)
+        return v
+
+    @property
+    def name(self) -> str:
+        """Returns the name of the bucket."""
+
+        return self.timeframe[0].isoformat()
+
+    def __iter__(self) -> Iterator[Transaction]:
+        """Returns an iterator over the transactions."""
+
+        return iter(self.transactions)
+
+    def __getitem__(self, index: int) -> Transaction:
+        """Returns a transaction by index."""
+
+        return self.transactions[index]
+
+
 class Account(BaseModel):
     id: str
     balance: int
@@ -101,7 +150,6 @@ class Account(BaseModel):
     type: CardType
     currencyCode: int
     cashbackType: CashbackType
-    statement: StatementResp = Field(default_factory=StatementResp)
     _cached_Statement: dict = Field(default_factory=dict)
     
     def getStatement(
