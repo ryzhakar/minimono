@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any
-from .models import ActionableAccount, CurrInfoResp, StatementReq, UserInfoResp, StatementResp, UserInfoReq, CurrRateReq, default_timeframe
+from .models import Account, CurrInfoResp, StatementReq, UserInfoResp, StatementResp, UserInfoReq, CurrRateReq, default_timeframe
 from .api_call import MonoCaller
 
 
@@ -23,14 +23,14 @@ class Client:
 
         return self.engine.make_request(CurrRateReq())
 
-    def availableAccounts(self) -> list[ActionableAccount]:
+    def availableAccounts(self) -> list[Account]:
         """Get available accounts."""
 
         return [self.accounts.__getattribute__(x[0]) for x in list(self.user.accounts.dict().items()) if x[1] is not None]
 
     def getStatement(
         self,
-        account: ActionableAccount,
+        account: Account,
         from_time=(datetime.now() - timedelta(days=7)),
         to_time=datetime.now()
         ) -> StatementResp:

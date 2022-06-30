@@ -7,6 +7,7 @@ from typing import Optional
 from time import sleep
 from random import uniform
 
+
 def default_timeframe(end_date: Optional[datetime]=None):
     if end_date is None:
         end_date =  datetime.now()
@@ -61,7 +62,7 @@ class Transaction(BaseModel):
         }
 
 class StatementResp(BaseModel):
-    statement_items: Sequence[Transaction] = list()
+    statement_items: Sequence[Transaction] = Field(default_factory=list)
 
     def __add__(self, other: Any) -> 'StatementResp':
         """Add two statements."""
@@ -101,8 +102,7 @@ class Account(BaseModel):
     currencyCode: int
     cashbackType: CashbackType
     statement: StatementResp = Field(default_factory=StatementResp)
-
-class ActionableAccount(Account):
+    _cached_Statement: dict = Field(default_factory=dict)
     
     def getStatement(
         self,
@@ -131,6 +131,7 @@ class ActionableAccount(Account):
         self.statement = whole_statement
         return whole_statement
 
+
 class MultipleAccounts(BaseModel):
     black: Union[Account, None] = None
     usd: Union[Account, None] = None
@@ -158,8 +159,9 @@ class MultipleAccounts(BaseModel):
             CardType.yellow: lambda x: "yellow",
             CardType.eAid: lambda x: "eAid",
         }
-        mapping = {setters[x['type']](x): ActionableAccount.parse_obj(x) for x in sequence_of_accounts}
+        mapping = {setters[x['type']](x): Account.parse_obj(x) for x in sequence_of_accounts}
         return cls.parse_obj(mapping)
+
 
 class UserInfoResp(BaseModel):
     class Config:
@@ -176,6 +178,7 @@ class UserInfoResp(BaseModel):
     def map_accounts(cls, v):
         return MultipleAccounts.map_from_sequence(v)
 
+
 class CurrencyInfo(BaseModel):
     currencyCodeA: int
     currencyCodeB: int
@@ -184,11 +187,14 @@ class CurrencyInfo(BaseModel):
     rateBuy: Optional[float] = None
     rateCross: Optional[float] = None
 
+
 class CurrInfoResp(BaseModel):
     rates: Sequence[CurrencyInfo]
 
+
 class HeadersPrivate(BaseModel):
     x_token: str = Field(alias="X-Token", title="X-Token")
+
 
 class StatementReq(BaseModel):
     account: str
@@ -222,11 +228,13 @@ class StatementReq(BaseModel):
         ac = self.account
         return f'/personal/statement/{ac}/{fr}/{to}'
 
+
 class UserInfoReq:
 
     @staticmethod
     def get_path_tail():
         return '/personal/client-info'
+
 
 class CurrRateReq:
 
