@@ -103,17 +103,17 @@ class ActionableAccount(Account):
 
         reqs = [
             StatementReq(account=self.id, from_=x[0], to_=x[1])
-            for x in generate_timeframe_list()
+            for x in generate_timeframe_list(fr=fr, to=to)
             ]
 
-        print(f"{len(reqs)} requests to be made", sep='', end='')
         whole_statement = StatementResp()
         for req in reqs:
             try:
                 consequent_month = engine_instance.make_request(req)
                 print('-', sep='', end='')
                 whole_statement = consequent_month + whole_statement
-                sleep(uniform(60, 65))
+
+            # BadRequest is returned by the API when requesting a timeframe that is too old.
             except BadRequest:
                 break
         return whole_statement
@@ -183,7 +183,9 @@ class StatementReq(BaseModel):
     to_: Union[datetime, None] = None
 
     @root_validator
-    def check_timeframe(cls, values): 
+    def check_timeframe(cls, values):
+        """Fixes the timeframe if wrong."""
+
         if values['to_'] is None:
             tfr = default_timeframe()
             values['from_'] = tfr[0]
