@@ -1,4 +1,4 @@
-from typing import Any, Sequence, Union
+from typing import Any, Iterator, Sequence, Union
 from datetime import datetime, timedelta
 from pydantic import BaseModel, AnyHttpUrl, Field, root_validator, validator
 from .enumerators import CardType, CashbackType
@@ -31,15 +31,6 @@ def generate_timeframe_list(fr: datetime = datetime(2017, 10, 1), to: datetime =
     timeframe_list.append((fr, to))
     return timeframe_list
     
-
-class Jar(BaseModel):
-    id: str
-    sendId: str
-    title: str
-    currencyCode: int
-    balance: int
-    description: Optional[str] = None
-    goal: Optional[int] = None
 
 class Transaction(BaseModel):
     id: str
@@ -77,11 +68,30 @@ class StatementResp(BaseModel):
         
         return StatementResp(statement_items=self.statement_items + other.statement_items)
 
+    def __iter__(self) -> Iterator[Transaction]:
+        """Returns an iterator over the transactions."""
+
+        return iter(self.statement_items)
+
+    def __getitem__(self, index: int) -> Transaction:
+        """Returns a transaction by index."""
+
+        return self.statement_items[index]
+
     def to_dict(self) -> dict:
         """Returns a dictionary with Transaction ids as keys and Transaction objects as values."""
 
         return {item.id: item for item in self.statement_items}
     
+class Jar(BaseModel):
+    id: str
+    sendId: str
+    title: str
+    currencyCode: int
+    balance: int
+    description: Optional[str] = None
+    goal: Optional[int] = None
+
 
 class Account(BaseModel):
     id: str
@@ -90,6 +100,7 @@ class Account(BaseModel):
     type: CardType
     currencyCode: int
     cashbackType: CashbackType
+    statement: StatementResp = Field(default_factory=StatementResp)
 
 class ActionableAccount(Account):
     
@@ -116,6 +127,8 @@ class ActionableAccount(Account):
             # BadRequest is returned by the API when requesting a timeframe that is too old.
             except BadRequest:
                 break
+
+        self.statement = whole_statement
         return whole_statement
 
 class MultipleAccounts(BaseModel):
