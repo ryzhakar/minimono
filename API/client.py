@@ -1,12 +1,16 @@
 from datetime import datetime, timedelta
 from typing import Any
-from .models import Account, CurrInfoResp, StatementReq, UserInfoResp, StatementResp, UserInfoReq, CurrRateReq, default_timeframe
+from .models import Account, CurrInfoResp, StatementReq, UserInfoResp, StatementResp, UserInfoReq, CurrRateReq, default_timeframe, TIMEBLOCK
 from .api_call import MonoCaller
 
 
 class Client:
 
-    def __init__(self, token, caller_class: Any = MonoCaller) -> None:
+    def __init__(
+        self,
+        token,
+        caller_class: Any = MonoCaller,
+        ) -> None:
         """Initialize clients request engine."""
 
         self.engine = caller_class(token)
