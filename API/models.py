@@ -2,6 +2,7 @@ from typing import (
     Any,
     Dict,
     Iterator,
+    Mapping,
     Sequence,
     Union,
     Optional
@@ -111,7 +112,7 @@ class StatementResp(BaseModel):
     transactions: Sequence[Transaction] = Field(default_factory=list)
     timeframe: Sequence[datetime] = Field(default_factory=tuple)
 
-    @root_validator(pre=True)
+    @root_validator
     def set_timeframe(cls, values: dict) -> dict:
         """Deduce the timeframe from the transactions."""
         if values['transactions']:
@@ -188,7 +189,7 @@ class Account(BaseModel):
     type: CardType
     currencyCode: int
     cashbackType: CashbackType
-    _cached_statement: Dict[datetime, TxBucket] = dict()
+    cached_statement: Dict[str, TxBucket] = dict()
 
     @root_validator(pre=True)
     def coerce_right_type(cls, keywords: Dict) -> Dict:
@@ -205,6 +206,8 @@ class Account(BaseModel):
             "fop": lambda x: CardType.fop,
             "yellow": lambda x: CardType.yellow,
             "eAid": lambda x: CardType.eAid,
+            "eur": lambda x: CardType.eur,
+            "usd": lambda x: CardType.usd,
         }
         curr_type = keywords['type']
         type_retriever = setters[curr_type]
@@ -230,9 +233,9 @@ class Account(BaseModel):
         dates = construct_bucket_list(fr=fr, to=to)
 
         for date in dates:
-            cached = date in self._cached_statement
+            cached = date.isoformat() in self.cached_statement
             if cached:
-                bucket = self._cached_statement[date]
+                bucket = self.cached_statement[date.isoformat()]
                 relevant_buckets.insert(0, bucket)
             else:
                 end_date = date + TIMEBLOCK
@@ -245,7 +248,7 @@ class Account(BaseModel):
                     )
                     statement = engine_instance.make_request(req)
                     bucket = TxBucket(date=date, transactions=statement.transactions)
-                    self._cached_statement[date] = bucket
+                    self.cached_statement[date.isoformat()] = bucket
                     relevant_buckets.insert(0, bucket)
                 # BadRequest is returned by the API when requesting a timeframe that is too old.
                 except BadRequest:
@@ -260,7 +263,7 @@ class Account(BaseModel):
         return StatementResp(transactions=whole_statement, timeframe=(fr, to))
 
 
-class MultipleAccounts(BaseModel):
+"""class MultipleAccounts(BaseModel):
     black: Union[Account, None] = None
     usd: Union[Account, None] = None
     eur: Union[Account, None] = None
@@ -273,11 +276,11 @@ class MultipleAccounts(BaseModel):
 
     @classmethod
     def map_from_sequence(cls, sequence_of_accounts: Sequence[dict]):
-        """Maps a sequence of accounts to a MultipleAccounts object."""
+        "Maps a sequence of accounts to a MultipleAccounts object."
         mapping = [Account.parse_obj(x) for x in sequence_of_accounts]
         mapping = {x.type: x for x in mapping}
         return cls(**mapping)
-
+"""
 
 class UserInfoResp(BaseModel):
     class Config:
@@ -285,14 +288,10 @@ class UserInfoResp(BaseModel):
     
     clientId: str
     name: str
-    accounts: MultipleAccounts
+    accounts: Sequence[Account]
     jars: Sequence[Jar] 
     webHookURL: Optional[AnyHttpUrl] = None
     permissions: Optional[str] = None
-
-    @validator('accounts', pre=True)
-    def map_accounts(cls, v):
-        return MultipleAccounts.map_from_sequence(v)
 
 
 class CurrencyInfo(BaseModel):
