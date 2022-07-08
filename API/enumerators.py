@@ -8,6 +8,8 @@ class CardType(str, Enum):
     fop = "fop"
     yellow = "yellow"
     eAid = "eAid"
+    eur = "eur"
+    usd = "usd"
 
 class CashbackType(str, Enum):
     none = "None"

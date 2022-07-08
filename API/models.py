@@ -1,5 +1,6 @@
 from typing import (
     Any,
+    Dict,
     Iterator,
     Sequence,
     Union,
@@ -103,6 +104,10 @@ class Transaction(BaseModel):
         }
 
 class StatementResp(BaseModel):
+    """:timeframe: represents the REAL range of dates in the statement,
+    not necessarily the range of dates in the request.
+    """
+
     transactions: Sequence[Transaction] = Field(default_factory=list)
     timeframe: Sequence[datetime] = Field(default_factory=tuple)
 
@@ -183,7 +188,29 @@ class Account(BaseModel):
     type: CardType
     currencyCode: int
     cashbackType: CashbackType
-    _cached_statement: dict[datetime, TxBucket] = dict()
+    _cached_statement: Dict[datetime, TxBucket] = dict()
+
+    @root_validator(pre=True)
+    def coerce_right_type(cls, keywords: Dict) -> Dict:
+        curr = {
+            980: CardType.black,
+            978: CardType.eur,
+            840: CardType.usd,
+        }
+        setters = {
+            "black": lambda x: curr[x['currencyCode']],
+            "white": lambda x: CardType.white,
+            "platinum": lambda x: CardType.platinum,
+            "iron": lambda x: CardType.iron,
+            "fop": lambda x: CardType.fop,
+            "yellow": lambda x: CardType.yellow,
+            "eAid": lambda x: CardType.eAid,
+        }
+        curr_type = keywords['type']
+        type_retriever = setters[curr_type]
+        valid_type = type_retriever(keywords)
+        keywords['type'] = valid_type
+        return keywords
     
     def getStatement(
         self,
@@ -246,22 +273,10 @@ class MultipleAccounts(BaseModel):
 
     @classmethod
     def map_from_sequence(cls, sequence_of_accounts: Sequence[dict]):
-        curr = {
-            980: 'black',
-            978: 'eur',
-            840: 'usd',
-        }
-        setters = {
-            CardType.black: lambda x: curr[x['currencyCode']],
-            CardType.white: lambda x: "white",
-            CardType.platinum: lambda x: "platinum",
-            CardType.iron: lambda x: "iron",
-            CardType.fop: lambda x: "fop",
-            CardType.yellow: lambda x: "yellow",
-            CardType.eAid: lambda x: "eAid",
-        }
-        mapping = {setters[x['type']](x): Account.parse_obj(x) for x in sequence_of_accounts}
-        return cls.parse_obj(mapping)
+        """Maps a sequence of accounts to a MultipleAccounts object."""
+        mapping = [Account.parse_obj(x) for x in sequence_of_accounts]
+        mapping = {x.type: x for x in mapping}
+        return cls(**mapping)
 
 
 class UserInfoResp(BaseModel):
@@ -271,7 +286,7 @@ class UserInfoResp(BaseModel):
     clientId: str
     name: str
     accounts: MultipleAccounts
-    jars: Sequence[Jar]
+    jars: Sequence[Jar] 
     webHookURL: Optional[AnyHttpUrl] = None
     permissions: Optional[str] = None
 
