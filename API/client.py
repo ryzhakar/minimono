@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Any, List, Mapping, Optional
+from typing import Any, Mapping, Optional
 from .models import (
     Account,
     CurrInfoResp,
@@ -26,7 +26,7 @@ class Client:
 
     def __init__(
         self,
-        token,
+        token: str,
         caller_class: Any = MonoCaller,
         load_file: Optional[str] = None
         ) -> None:

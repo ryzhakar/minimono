@@ -2,7 +2,6 @@ from typing import (
     Any,
     Dict,
     Iterator,
-    Mapping,
     Sequence,
     Union,
     Optional
@@ -261,26 +260,6 @@ class Account(BaseModel):
         whole_statement.sort(key=lambda x: x.time)
 
         return StatementResp(transactions=whole_statement, timeframe=(fr, to))
-
-
-"""class MultipleAccounts(BaseModel):
-    black: Union[Account, None] = None
-    usd: Union[Account, None] = None
-    eur: Union[Account, None] = None
-    white: Union[Account, None] = None
-    platinum: Union[Account, None] = None
-    iron: Union[Account, None] = None
-    fop: Union[Account, None] = None
-    yellow: Union[Account, None] = None
-    eAid: Union[Account, None] = None
-
-    @classmethod
-    def map_from_sequence(cls, sequence_of_accounts: Sequence[dict]):
-        "Maps a sequence of accounts to a MultipleAccounts object."
-        mapping = [Account.parse_obj(x) for x in sequence_of_accounts]
-        mapping = {x.type: x for x in mapping}
-        return cls(**mapping)
-"""
 
 class UserInfoResp(BaseModel):
     class Config:
