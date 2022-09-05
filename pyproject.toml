@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "minimono"
+version = "0.1.0"
+description = "A wrapper for monobanks API. With caching and serialization."
+authors = ["Arthur Ryzhak <ryzhakar@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pydantic = "^1.10.1"
+
+[tool.poetry.dev-dependencies]
+hypothesis = "^6.54.5"
+black = "^22.8.0"
+pytest-cov = "^3.0.0"
+devtools = "^0.9.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

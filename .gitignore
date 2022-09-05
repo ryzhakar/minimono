@@ -1,3 +1,6 @@
+*.json
+*.pyc
+.*
 .env
 test.py
 *cache__
