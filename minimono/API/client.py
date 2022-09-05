@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Any, Mapping, Optional
+from typing import Any, Dict, Optional
 from .models import (
     Account,
     CurrInfoResp,
@@ -57,7 +57,7 @@ class Client:
         return account.getStatement(self.engine, fr=from_time, to=to_time)
 
     @property
-    def accounts(self) -> Mapping[str, Account]:
+    def accounts(self) -> Dict[str, Account]:
         """Get accounts."""
         mapping = {
             x.type.name: x for x in self.user.accounts
