@@ -14,7 +14,7 @@ from pydantic import(
     root_validator,
     validator
     )
-from .enumerators import CardType, CashbackType, enum_encoders
+from .enumerators import CardType, CashbackType, CurrencyCode, enum_encoders
 from .exceptions import BadRequest
 from .utility import (
     align_datetime,
@@ -27,6 +27,7 @@ from .utility import (
 class HeadersPrivate(BaseModel):
     class Config:
         json_encoders=enum_encoders
+        allow_population_by_field_name=True
 
     x_token: str = Field(alias="X-Token", title="X-Token")
 
@@ -92,7 +93,7 @@ class Transaction(BaseModel):
     hold: bool
     amount: int
     operationAmount: int
-    currencyCode: int
+    currencyCode: CurrencyCode
     commissionRate: int
     cashbackAmount: int
     balance: int
@@ -120,8 +121,8 @@ class StatementResp(BaseModel):
     not necessarily the range of dates in the request.
     """
 
-    transactions: Sequence[Transaction] = Field(default_factory=list)
-    timeframe: Sequence[datetime] = Field(default_factory=tuple)
+    transactions: Sequence[Transaction]
+    timeframe: Sequence[datetime] = Field(default_factory=list)
 
     @root_validator
     def set_timeframe(cls, values: dict) -> dict:
@@ -161,7 +162,7 @@ class Jar(BaseModel):
     id: str
     sendId: str
     title: str
-    currencyCode: int
+    currencyCode: CurrencyCode
     balance: int
     description: Optional[str] = None
     goal: Optional[int] = None
@@ -174,7 +175,7 @@ class TxBucket(BaseModel):
     """Statements with defined timeframe length for caching purposes."""
 
     date: datetime
-    transactions: Sequence[Transaction] = Field(default_factory=list)
+    transactions: Sequence[Transaction]
     
     @validator("date")
     def align_datetime(cls, v) -> datetime:
@@ -207,7 +208,7 @@ class Account(BaseModel):
     balance: int
     creditLimit: int
     type: CardType
-    currencyCode: int
+    currencyCode: CurrencyCode
     cashbackType: CashbackType
     cached_statement: Dict[str, TxBucket] = dict()
 
