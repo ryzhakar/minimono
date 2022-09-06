@@ -14,7 +14,7 @@ from pydantic import(
     root_validator,
     validator
     )
-from .enumerators import CardType, CashbackType
+from .enumerators import CardType, CashbackType, enum_encoders
 from .exceptions import BadRequest
 from .utility import (
     align_datetime,
@@ -25,10 +25,16 @@ from .utility import (
 
 
 class HeadersPrivate(BaseModel):
+    class Config:
+        json_encoders=enum_encoders
+
     x_token: str = Field(alias="X-Token", title="X-Token")
 
 
 class StatementReq(BaseModel):
+    class Config:
+        json_encoders=enum_encoders
+
     account: str
     from_: Union[datetime, None] = None
     to_: Union[datetime, None] = None
@@ -76,6 +82,9 @@ class CurrRateReq:
     
 
 class Transaction(BaseModel):
+    class Config:
+        json_encoders=enum_encoders
+
     id: str
     time: datetime
     description: str
@@ -104,6 +113,9 @@ class Transaction(BaseModel):
         }
 
 class StatementResp(BaseModel):
+    class Config:
+        json_encoders=enum_encoders
+
     """:timeframe: represents the REAL range of dates in the statement,
     not necessarily the range of dates in the request.
     """
@@ -143,6 +155,9 @@ class StatementResp(BaseModel):
         return {item.id: item for item in self.transactions}
     
 class Jar(BaseModel):
+    class Config:
+        json_encoders=enum_encoders
+
     id: str
     sendId: str
     title: str
@@ -153,6 +168,9 @@ class Jar(BaseModel):
 
 
 class TxBucket(BaseModel):
+    class Config:
+        json_encoders=enum_encoders
+
     """Statements with defined timeframe length for caching purposes."""
 
     date: datetime
@@ -182,6 +200,9 @@ class TxBucket(BaseModel):
 
 
 class Account(BaseModel):
+    class Config:
+        json_encoders=enum_encoders
+
     id: str
     balance: int
     creditLimit: int
@@ -264,6 +285,7 @@ class Account(BaseModel):
 class UserInfoResp(BaseModel):
     class Config:
         extra='ignore'
+        json_encoders=enum_encoders
     
     clientId: str
     name: str
@@ -274,6 +296,9 @@ class UserInfoResp(BaseModel):
 
 
 class CurrencyInfo(BaseModel):
+    class Config:
+        json_encoders=enum_encoders
+
     currencyCodeA: int
     currencyCodeB: int
     date: datetime
@@ -283,4 +308,7 @@ class CurrencyInfo(BaseModel):
 
 
 class CurrInfoResp(BaseModel):
+    class Config:
+        json_encoders=enum_encoders
+
     rates: Sequence[CurrencyInfo]

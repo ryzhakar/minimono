@@ -15,3 +15,8 @@ class CashbackType(str, Enum):
     none = "None"
     uah = "UAH"
     miles = "Miles"
+
+enum_encoders = {
+    CardType: lambda x: x.value,
+    CashbackType: lambda x: x.value,
+}

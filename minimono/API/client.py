@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 from .models import (
     Account,
     CurrInfoResp,
@@ -24,29 +24,30 @@ class Client:
         with open(file_name, "r") as f:
             self.user = UserInfoResp.parse_raw(f.read())
 
+    def refreshUser(self):
+        """Refresh user info from API. Loses cached accounts."""
+        
+        self.user = cast(UserInfoResp, self.engine.make_request(UserInfoReq()))
+    
     def __init__(
         self,
         token: str,
-        caller_class: Any = MonoCaller,
+        avoid_ratelimiting: bool = True,
         load_file: Optional[str] = None
         ) -> None:
         """Initialize clients request engine."""
 
-        self.engine = caller_class(token)
+        self.engine = MonoCaller(token, self_ratelimit=avoid_ratelimiting)
         if load_file is not None:
             self.loadFile(load_file)
         else:
-            self.user = self.engine.make_request(UserInfoReq())
+            self.refreshUser()
         
-    def refreshUser(self):
-        """Refresh user info from API. Loses cached accounts."""
-        
-        self.user = self.engine.make_request(UserInfoReq())
 
     def getRates(self) -> CurrInfoResp:
         """Get currency rates."""
 
-        return self.engine.make_request(CurrRateReq())
+        return cast(CurrInfoResp, self.engine.make_request(CurrRateReq()))
 
     def getStatement(
         self,

@@ -18,16 +18,17 @@ class MonoCaller:
             ),
     }
 
-    def __init__(self, token: str):
+    def __init__(self, token: str, self_ratelimit: bool = True):
         self.headers = HeadersPrivate.parse_obj({"X-Token": token})
         self.last_request = datetime(1970, 1, 1)
+        self.self_ratelimit = self_ratelimit
 
-    def ratecheck(self, last_request: datetime) -> None:
+    def ratecheck(self) -> None:
         """Checks if the rate limit is exceeded.
         If it is, sleeps for a random amount of time.
         """
 
-
+        last_request = self.last_request
         # Using a random delay to avoid being rate limited
         about_minute = random_uniform(60, 65)
         seconds_since_last_request = (datetime.now() - last_request).total_seconds()
@@ -51,8 +52,8 @@ class MonoCaller:
 
         headers = self.headers.dict(by_alias=True)
 
-        
-        self.ratecheck(self.last_request)
+        if self.self_ratelimit:
+            self.ratecheck()
         response = requests.request("GET", url, headers=headers)
         if response.status_code != 200:
             raise ERRORS[response.status_code](response.json())
