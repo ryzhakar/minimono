@@ -133,6 +133,9 @@ class StatementResp(BaseModel):
             values['timeframe'] = (start, end)
         return values
 
+    def __len__(self) -> int:
+        return len(self.transactions)
+        
     def __add__(self, other: Any) -> 'StatementResp':
         """Add two statements."""
 

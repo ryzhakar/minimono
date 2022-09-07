@@ -6,7 +6,8 @@ from minimono.API.models import (
     StatementResp,
     CurrencyInfo,
     HeadersPrivate,
-    TxBucket
+    TxBucket,
+    StatementReq,
 )
 
 b_tx_bucket = st.builds(
@@ -27,4 +28,5 @@ b_any_model = st.one_of(
         st.builds(StatementResp),
         st.builds(CurrencyInfo),
         st.builds(HeadersPrivate),
+        # st.builds(StatementReq),
     )
