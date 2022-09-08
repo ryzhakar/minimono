@@ -44,12 +44,12 @@ class StatementReq(BaseModel):
     def check_timeframe(cls, values):
         """Fixes the timeframe if wrong."""
 
-        if values['to_'] is None:
+        if values.get('to_') is None:
             tfr = default_timeframe()
             values['from_'] = tfr[0]
             values['to_'] = tfr[1]
         else:
-            if values['from_'] is None:
+            if values.get('from_') is None:
                 tfr = default_timeframe(end_date=values['to_'])
                 values['from_'] = tfr[0]
                 values['to_'] = tfr[1]

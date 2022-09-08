@@ -40,7 +40,7 @@ def test_statements_methods(s1, s2):
     assert len(s) == len(s1) + len(s2)
     assert all(x in s.transactions for x in itertools.chain(s1, s2))
     assert all(y == s[x] for x, y in enumerate(s))
-    
+    assert all(y in s.transactions for x, y in s.to_dict().items())
 
 
     
