@@ -5,10 +5,14 @@ description = "A wrapper for monobanks API. With caching and serialization."
 authors = ["Arthur Ryzhak <ryzhakar@gmail.com>"]
 license = "MIT"
 
+[tool.poetry.scripts]
+minimono = "minimono.main:main"
+
 [tool.poetry.dependencies]
 python = "^3.8"
 pydantic = "^1.10.1"
 requests = "^2.28.1"
+typer = "^0.6.1"
 
 [tool.poetry.dev-dependencies]
 hypothesis = "^6.54.5"
