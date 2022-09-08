@@ -1,3 +1,4 @@
+from pytest import raises
 from hypothesis import given, strategies as st
 from pydantic import BaseModel
 from typing import cast
@@ -11,7 +12,7 @@ from minimono.API.models import (
     StatementReq,
     TxBucket
 )
-from .strategies import b_any_model
+from .strategies import b_any_model, b_non_empty_statement
 
 @given(
     b_any_model
@@ -29,7 +30,7 @@ def test_transaction_reduce(tr):
         for key in reduced
     )
 
-@given(st.builds(Statement), st.builds(Statement))
+@given(b_non_empty_statement, b_non_empty_statement)
 def test_statements_methods(s1, s2):
     import itertools
 
@@ -42,6 +43,14 @@ def test_statements_methods(s1, s2):
     assert all(y == s[x] for x, y in enumerate(s))
     assert all(y in s.transactions for x, y in s.to_dict().items())
 
+    assert set((s, s1, s2))
+    assert isinstance(s1[0] + s2[0], Statement)
+    assert isinstance((s1[0] + s2), Statement)
 
+    with raises(TypeError):
+        s[0] + 's' # type: ignore
+
+    with raises(TypeError):
+        s + 's' # type: ignore
     
     

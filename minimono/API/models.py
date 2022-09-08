@@ -7,6 +7,7 @@ from typing import (
     Optional
     )
 from datetime import datetime, timedelta, timezone
+from typing_extensions import Self
 from pydantic import(
     BaseModel,
     AnyHttpUrl,
@@ -55,9 +56,9 @@ class StatementReq(BaseModel):
                 values['to_'] = tfr[1]
             else:
                 delta = values['to_'] - values['from_']
-                valid_timeframe = int(delta.total_seconds()) > 0 and not int(delta.total_seconds()) > 2682000
+                valid_timeframe = int(delta.total_seconds()) > 0 and not int(delta.total_seconds()) > TIMEBLOCK.total_seconds()
                 if not valid_timeframe:
-                    values['from_'] = values['to_'] - timedelta(seconds=2682000)
+                    values['from_'] = values['to_'] - TIMEBLOCK
 
         return values
     
@@ -113,6 +114,21 @@ class Transaction(BaseModel):
             "amount": self.amount,
         }
 
+    def __add__(self, other: Union[Self, 'Statement']) -> 'Statement':
+        if isinstance(other, type(self)):
+            both = [self, other]
+            both.sort(key=lambda x: x.time)
+            return Statement(transactions=both)
+        else:
+            try:
+                # In case adding a Statement
+                return other + self
+            except TypeError:
+                raise TypeError("Can only add Transaction or Statement to Transaction")
+
+    def __hash__(self):
+        return hash(self.id)
+
 class Statement(BaseModel):
     class Config:
         json_encoders=enum_encoders
@@ -136,10 +152,14 @@ class Statement(BaseModel):
     def __len__(self) -> int:
         return len(self.transactions)
         
-    def __add__(self, other: Any) -> 'Statement':
+    def __add__(self, other: Union[Self, 'Transaction']) -> Self:
         """Add two statements."""
-
-        tx = self.transactions + other.transactions
+        if isinstance(other, type(self)):
+            tx = list(self.transactions) + list(other.transactions)
+        elif isinstance(other, Transaction):
+            tx = list(self.transactions) + [other,]
+        else:
+            raise TypeError("Can only add Transaction or Statement to Statement")
         tx.sort(key=lambda x: x.time)
         return Statement(transactions=tx)
 
@@ -152,6 +172,9 @@ class Statement(BaseModel):
         """Returns a transaction by index."""
 
         return self.transactions[index]
+
+    def __hash__(self):
+        return hash(tuple(self.transactions))
 
     def to_dict(self) -> dict:
         """Returns a dictionary with Transaction ids as keys and Transaction objects as values."""

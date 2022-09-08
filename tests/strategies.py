@@ -16,6 +16,14 @@ b_tx_bucket = st.builds(
     transactions=st.lists(st.builds(Transaction))
 )
 
+b_non_empty_statement = st.builds(
+    Statement,
+    transactions=st.lists(
+        st.builds(Transaction),
+        min_size=2
+    )
+    )
+
 b_any_model = st.one_of(
         st.builds(
             Account,
@@ -26,7 +34,7 @@ b_any_model = st.one_of(
         ),
         st.builds(Transaction),
         st.builds(User),
-        st.builds(Statement),
+        b_non_empty_statement,
         st.builds(CurrencyExchange),
         st.builds(HeadersPrivate),
         st.builds(
