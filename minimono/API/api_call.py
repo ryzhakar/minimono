@@ -3,7 +3,7 @@ from time import sleep
 import requests
 from pydantic import BaseModel
 from random import uniform as random_uniform
-from .models import HeadersPrivate, CurrInfoResp, Transaction, UserInfoResp, StatementResp, CurrencyInfo
+from .models import HeadersPrivate, Currencies, Transaction, User, Statement, CurrencyExchange
 from .exceptions import ERRORS
 
 
@@ -11,9 +11,9 @@ class MonoCaller:
 
     base_url = 'https://api.monobank.ua'
     corresponding_methods = {
-        "CurrRateReq": lambda x: CurrInfoResp(rates=[CurrencyInfo.parse_obj(n) for  n in x]),
-        "UserInfoReq": lambda x: UserInfoResp.parse_obj(x),
-        "StatementReq": lambda x: StatementResp(
+        "CurrRateReq": lambda x: Currencies(rates=[CurrencyExchange.parse_obj(n) for  n in x]),
+        "UserInfoReq": lambda x: User.parse_obj(x),
+        "StatementReq": lambda x: Statement(
             transactions=[Transaction.parse_obj(n) for n in x],
             ),
     }

@@ -113,7 +113,7 @@ class Transaction(BaseModel):
             "amount": self.amount,
         }
 
-class StatementResp(BaseModel):
+class Statement(BaseModel):
     class Config:
         json_encoders=enum_encoders
 
@@ -136,12 +136,12 @@ class StatementResp(BaseModel):
     def __len__(self) -> int:
         return len(self.transactions)
         
-    def __add__(self, other: Any) -> 'StatementResp':
+    def __add__(self, other: Any) -> 'Statement':
         """Add two statements."""
 
         tx = self.transactions + other.transactions
         tx.sort(key=lambda x: x.time)
-        return StatementResp(transactions=tx)
+        return Statement(transactions=tx)
 
     def __iter__(self) -> Iterator[Transaction]:
         """Returns an iterator over the transactions."""
@@ -244,7 +244,7 @@ class Account(BaseModel):
         engine_instance,
         fr: datetime,
         to: datetime,
-        ) -> StatementResp:
+        ) -> Statement:
         """Get the statement between dates using cached values where possible.
         Tz-info must be UTC.
         """
@@ -284,9 +284,9 @@ class Account(BaseModel):
         whole_statement = [tx for tx in whole_statement if tx.time >= fr and tx.time <= to]
         whole_statement.sort(key=lambda x: x.time)
 
-        return StatementResp(transactions=whole_statement, timeframe=(fr, to))
+        return Statement(transactions=whole_statement, timeframe=(fr, to))
 
-class UserInfoResp(BaseModel):
+class User(BaseModel):
     class Config:
         extra='ignore'
         json_encoders=enum_encoders
@@ -299,7 +299,7 @@ class UserInfoResp(BaseModel):
     permissions: Optional[str] = None
 
 
-class CurrencyInfo(BaseModel):
+class CurrencyExchange(BaseModel):
     class Config:
         json_encoders=enum_encoders
 
@@ -311,8 +311,8 @@ class CurrencyInfo(BaseModel):
     rateCross: Optional[float] = None
 
 
-class CurrInfoResp(BaseModel):
+class Currencies(BaseModel):
     class Config:
         json_encoders=enum_encoders
 
-    rates: Sequence[CurrencyInfo]
+    rates: Sequence[CurrencyExchange]

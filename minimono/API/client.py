@@ -2,9 +2,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, cast
 from .models import (
     Account,
-    CurrInfoResp,
-    UserInfoResp,
-    StatementResp,
+    CurrencyExchange,
+    User,
+    Statement,
     UserInfoReq,
     CurrRateReq,
 )
@@ -15,19 +15,19 @@ class Client:
 
     def saveFile(self):
         """Save user info (including cached accounts) to file."""
-
+        filename = f"{self.user.clientId}.json"
         jsonified = self.user.json(indent=2, ensure_ascii=False)
-        with open(f"{self.user.clientId}.json", "w+") as f:
+        with open(filename, "w+") as f:
             f.write(jsonified)
 
     def loadFile(self, file_name: str):
         with open(file_name, "r") as f:
-            self.user = UserInfoResp.parse_raw(f.read())
+            self.user = User.parse_raw(f.read())
 
     def refreshUser(self):
         """Refresh user info from API. Loses cached accounts."""
         
-        self.user = cast(UserInfoResp, self.engine.make_request(UserInfoReq()))
+        self.user = cast(User, self.engine.make_request(UserInfoReq()))
     
     def __init__(
         self,
@@ -45,17 +45,17 @@ class Client:
             self.refreshUser()
         
 
-    def getRates(self) -> CurrInfoResp:
+    def getRates(self) -> CurrencyExchange:
         """Get currency rates."""
 
-        return cast(CurrInfoResp, self.engine.make_request(CurrRateReq()))
+        return cast(CurrencyExchange, self.engine.make_request(CurrRateReq()))
 
     def getStatement(
         self,
         account: Account,
         from_time=(datetime.now(tz=timezone.utc) - timedelta(days=7)),
         to_time=datetime.now(tz=timezone.utc)
-        ) -> StatementResp:
+        ) -> Statement:
         return account.getStatement(self.engine, fr=from_time, to=to_time)
 
     @property

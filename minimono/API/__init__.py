@@ -1,8 +1,8 @@
 from .models import Account as Account
 from .models import Transaction as Transaction
-from .models import UserInfoResp as UserInfoResp
-from .models import StatementResp as StatementResp
-from .models import CurrencyInfo as CurrencyInfo
+from .models import User as User
+from .models import Statement as Statement
+from .models import CurrencyExchange as CurrencyExchange
 from .models import HeadersPrivate as HeadersPrivate
 from .models import StatementReq as StatementReq
 from .models import UserInfoReq as UserInfoReq
