@@ -33,11 +33,12 @@ class Client:
         self,
         token: str,
         avoid_ratelimiting: bool = True,
-        load_file: Optional[str] = None
+        load_file: Optional[str] = None,
+        engine_class: Any = MonoCaller
         ) -> None:
         """Initialize clients request engine."""
 
-        self.engine = MonoCaller(token, self_ratelimit=avoid_ratelimiting)
+        self.engine = engine_class(token, self_ratelimit=avoid_ratelimiting)
         if load_file is not None:
             self.loadFile(load_file)
         else:
