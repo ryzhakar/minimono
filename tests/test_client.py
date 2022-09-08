@@ -23,10 +23,11 @@ def test_client_roundtrip():
 
     c1.getStatement(c1['black'], to_time=datetime.now(tz=timezone.utc), from_time=datetime.now(tz=timezone.utc)-TIMEBLOCK)
     c1.saveFile()
-    
-    filename = f"{c1.user.clientId}.json"
-    c2 = Client(token, load_file=filename)
-    c3 = Client(token, load_file=filename)
+    filename1 = f"{c1.user.clientId}.json"
+    filename2 = filename1
+    c2 = Client(token, load_file=filename1)
+    c2.saveFile(filename=filename2)
+    c3 = Client(token, load_file=filename2)
     c3.getStatement(c1['black']) # Should be cached already
 
     assert 'a' != c1

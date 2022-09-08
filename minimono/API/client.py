@@ -13,9 +13,10 @@ from .api_call import MonoCaller
 
 class Client:
 
-    def saveFile(self):
+    def saveFile(self, filename: Optional[str] = None):
         """Save user info (including cached accounts) to file."""
-        filename = f"{self.user.clientId}.json"
+        if not filename:
+            filename = f"{self.user.clientId}.json"
         jsonified = self.user.json(indent=2, ensure_ascii=False)
         with open(filename, "w+") as f:
             f.write(jsonified)

@@ -4,9 +4,9 @@ from typing import cast
 from minimono.API.models import (
     Account,
     Transaction,
-    UserInfoResp,
-    StatementResp,
-    CurrencyInfo,
+    User,
+    Statement,
+    CurrencyExchange,
     HeadersPrivate,
     StatementReq,
     TxBucket
@@ -29,12 +29,12 @@ def test_transaction_reduce(tr):
         for key in reduced
     )
 
-@given(st.builds(StatementResp), st.builds(StatementResp))
+@given(st.builds(Statement), st.builds(Statement))
 def test_statements_methods(s1, s2):
     import itertools
 
-    s1 = cast(StatementResp, s1)
-    s2 = cast(StatementResp, s2)
+    s1 = cast(Statement, s1)
+    s2 = cast(Statement, s2)
     s = s1 + s2
     
     assert len(s) == len(s1) + len(s2)
