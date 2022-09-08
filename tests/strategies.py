@@ -1,6 +1,6 @@
 from datetime import timezone, datetime
 from hypothesis import given, strategies as st
-from minimono.API.models import (
+from minimono.models import (
     Account,
     Transaction,
     User,

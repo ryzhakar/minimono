@@ -2,7 +2,7 @@ from pytest import raises
 from hypothesis import given, strategies as st
 from pydantic import BaseModel
 from typing import cast
-from minimono.API.models import (
+from minimono.models import (
     Account,
     Transaction,
     User,

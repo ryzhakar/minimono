@@ -1,29 +1,28 @@
-from datetime import datetime, timedelta
-from time import sleep
 import requests
+from datetime import datetime
+from time import sleep
 from pydantic import BaseModel
 from random import uniform as random_uniform
-from .models import HeadersPrivate, Currencies, Transaction, User, Statement, CurrencyExchange
-from .exceptions import ERRORS
+from .. import abstract, models
 
 
-class MonoCaller:
+class MonoCaller(abstract.MonoCallerABC):
 
     base_url = 'https://api.monobank.ua'
     corresponding_methods = {
-        "CurrRateReq": lambda x: Currencies(rates=[CurrencyExchange.parse_obj(n) for  n in x]),
-        "UserInfoReq": lambda x: User.parse_obj(x),
-        "StatementReq": lambda x: Statement(
-            transactions=[Transaction.parse_obj(n) for n in x],
+        "CurrRateReq": lambda x: models.Currencies(rates=[models.CurrencyExchange.parse_obj(n) for  n in x]),
+        "UserInfoReq": lambda x: models.User.parse_obj(x),
+        "StatementReq": lambda x: models.Statement(
+            transactions=[models.Transaction.parse_obj(n) for n in x],
             ),
     }
 
     def __init__(self, token: str, self_ratelimit: bool = True):
-        self.headers = HeadersPrivate.parse_obj({"X-Token": token})
+        self.headers = models.HeadersPrivate.parse_obj({"X-Token": token})
         self.last_request = datetime(1970, 1, 1)
         self.self_ratelimit = self_ratelimit
 
-    def ratecheck(self) -> None:
+    def _ratecheck(self) -> None:
         """Checks if the rate limit is exceeded.
         If it is, sleeps for a random amount of time.
         """
@@ -53,10 +52,10 @@ class MonoCaller:
         headers = self.headers.dict(by_alias=True)
 
         if self.self_ratelimit:
-            self.ratecheck()
+            self._ratecheck()
         response = requests.request("GET", url, headers=headers)
         if response.status_code != 200: # pragma: no cover
-            raise ERRORS[response.status_code](response.json())
+            raise abstract.ERRORS[response.status_code](response.json())
 
         encapsulated = response_method(response.json())
         return encapsulated

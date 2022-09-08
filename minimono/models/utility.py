@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Sequence, Optional
-from .exceptions import TimeConstraintError
+from ..abstract import TimeConstraintError
 
 TIMEBLOCK = timedelta(days=31)
 

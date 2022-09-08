@@ -16,7 +16,7 @@ from pydantic import(
     validator
     )
 from .enumerators import CardType, CashbackType, CurrencyCode, enum_encoders
-from .exceptions import BadRequest
+from ..abstract.caller_elements import BadRequest
 from .utility import (
     align_datetime,
     default_timeframe,

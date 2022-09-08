@@ -1,19 +1,16 @@
 # Shares mutable state
 # to minimize API calls
-
-from datetime import datetime, timezone
 import os
-from pytest import fixture, raises
-from minimono import Client, TIMEBLOCK, default_timeframe, TimeConstraintError
+from pytest import raises
+from datetime import datetime, timezone
+from minimono import Client
+from minimono.models import TIMEBLOCK, default_timeframe
+from minimono.abstract import TimeConstraintError
 
 token = os.environ["MONO_TOKEN"]
 
 common_client_instance = Client(token, avoid_ratelimiting=False)
 rate_limited_instance = Client(token, avoid_ratelimiting=True)
-
-# @fixture
-# def client_instance():
-    # return Client(token, avoid_ratelimiting=True)
 
 
 def test_client_roundtrip():
