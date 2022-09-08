@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "minimono"
-version = "0.3.0"
+version = "0.4.0"
 description = "A wrapper for monobanks API. With caching and serialization."
 authors = ["Arthur Ryzhak <ryzhakar@gmail.com>"]
 license = "MIT"
