@@ -21,7 +21,7 @@ class CurrencyCode(int, Enum):
     eur = 978
     usd = 840
 
-enum_encoders = {
+enum_encoders = { # pragma: no cover
     CardType: lambda x: x.value,
     CashbackType: lambda x: x.value,
     CurrencyCode: lambda x: x.value,

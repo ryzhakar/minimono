@@ -15,7 +15,7 @@ def default_timeframe(end_date: Optional[datetime]=None):
     if end_date is None:
         end_date =  datetime.now(tz=timezone.utc)
     to = end_date
-    fr = to - timedelta(seconds=2682000.0)
+    fr = to - TIMEBLOCK
 
     if datetime(2017, 10, 1, tzinfo=timezone.utc) > fr:
         raise TimeConstraintError('The oldest data API can provide is from 2017-10-01')

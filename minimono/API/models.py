@@ -275,8 +275,8 @@ class Account(BaseModel):
                     self.cached_statement[date.isoformat()] = bucket
                     relevant_buckets.insert(0, bucket)
                 # BadRequest is returned by the API when requesting a timeframe that is too old.
-                except BadRequest:
-                    pass
+                except BadRequest: # pragma: no cover
+                    break # pragma: no cover
 
         whole_statement = list()
         for bucket in relevant_buckets:

@@ -10,3 +10,6 @@ from .API import StatementReq as StatementReq
 from .API import UserInfoReq as UserInfoReq
 from .API import CurrRateReq as CurrRateReq
 from .API import construct_bucket_list as construct_bucket_list
+from .API import default_timeframe as default_timeframe
+from .API.exceptions import TimeConstraintError as TimeConstraintError
+from .API import TIMEBLOCK

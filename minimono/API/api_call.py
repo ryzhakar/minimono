@@ -55,7 +55,7 @@ class MonoCaller:
         if self.self_ratelimit:
             self.ratecheck()
         response = requests.request("GET", url, headers=headers)
-        if response.status_code != 200:
+        if response.status_code != 200: # pragma: no cover
             raise ERRORS[response.status_code](response.json())
 
         encapsulated = response_method(response.json())
