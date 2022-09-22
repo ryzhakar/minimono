@@ -1,4 +1,4 @@
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractclassmethod, abstractmethod
 from pydantic import BaseModel
 
 class RateLimited(Exception):
@@ -22,7 +22,7 @@ ERRORS = {
 
 class RequestObjectABC(ABC): #pragma: no cover
     
-    @abstractclassmethod
+    @abstractmethod
     def get_path_tail(self) -> str: #type: ignore
         pass
 

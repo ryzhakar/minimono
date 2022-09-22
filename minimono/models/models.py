@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from typing import (
     Any,
     Dict,
@@ -16,20 +15,14 @@ from pydantic import(
     validator
     )
 from datetime import datetime, timedelta, timezone
-from abc import ABC, abstractmethod
 from .enumerators import CardType, CashbackType, CurrencyCode, enum_encoders
-from ..abstract.caller_elements import BadRequest
+from ..abstract.caller_elements import BadRequest, RequestObjectABC
 from .utility import (
     align_datetime,
     default_timeframe,
     construct_bucket_list,
     TIMEBLOCK
     )
-
-class Path(ABC): # pragma: no cover
-    @abstractmethod
-    def get_path_tail(self) -> str: # pragma: no cover
-        pass
 
 
 class HeadersPrivate(BaseModel):
@@ -40,7 +33,7 @@ class HeadersPrivate(BaseModel):
     x_token: str = Field(alias="X-Token", title="X-Token")
 
 
-class StatementReq(BaseModel, Path):
+class StatementReq(BaseModel, RequestObjectABC):
     class Config:
         json_encoders=enum_encoders
 
@@ -76,13 +69,13 @@ class StatementReq(BaseModel, Path):
         return f'/personal/statement/{ac}/{fr}/{to}'
 
 
-class UserInfoReq(Path):
+class UserInfoReq(RequestObjectABC):
 
     def get_path_tail(self):
         return '/personal/client-info'
 
 
-class CurrRateReq(Path):
+class CurrRateReq(RequestObjectABC):
 
     def get_path_tail(self):
         return '/bank/currency'
