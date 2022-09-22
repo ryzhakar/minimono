@@ -4,7 +4,8 @@ from typing import (
     Iterator,
     Sequence,
     Union,
-    Optional
+    Optional,
+    cast
     )
 from typing_extensions import Self
 from pydantic import(
@@ -16,7 +17,7 @@ from pydantic import(
     )
 from datetime import datetime, timedelta, timezone
 from .enumerators import CardType, CashbackType, CurrencyCode, enum_encoders
-from ..abstract.caller_elements import BadRequest, RequestObjectABC
+from ..abstract.caller_elements import BadRequest, RequestObjectABC, MonoCallerABC
 from .utility import (
     align_datetime,
     default_timeframe,
@@ -221,7 +222,7 @@ class CacheableTransactionProvider(BaseModel):
 
     def getStatement(
         self,
-        engine_instance,
+        engine_instance: MonoCallerABC,
         fr: datetime,
         to: datetime,
         ) -> Statement:
@@ -250,7 +251,7 @@ class CacheableTransactionProvider(BaseModel):
                     req = StatementReq(
                         account=self.id, from_=date, to_=date + TIMEBLOCK
                     )
-                    statement = engine_instance.make_request(req)
+                    statement = cast(Statement, engine_instance.make_request(req))
                     bucket = TxBucket(date=date, transactions=statement.transactions)
                     self.cached_statement[date.isoformat()] = bucket
                     relevant_buckets.insert(0, bucket)
