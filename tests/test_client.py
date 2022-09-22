@@ -16,22 +16,22 @@ rate_limited_instance = Client(token, avoid_ratelimiting=True)
 def test_client_roundtrip():
     c1 = common_client_instance
     with raises(ValueError):
-        c1.getStatement(c1['black'], to_time=datetime.now())
+        c1.getStatement(c1['white'], to_time=datetime.now())
 
-    c1.getStatement(c1['black'], to_time=datetime.now(tz=timezone.utc), from_time=datetime.now(tz=timezone.utc)-TIMEBLOCK)
+    c1.getStatement(c1['white'], to_time=datetime.now(tz=timezone.utc), from_time=datetime.now(tz=timezone.utc)-TIMEBLOCK)
     c1.saveFile()
     filename1 = f"{c1.user.clientId}.json"
     filename2 = filename1
     c2 = Client(token, load_file=filename1)
     c2.saveFile(filename=filename2)
     c3 = Client(token, load_file=filename2)
-    c3.getStatement(c1['black']) # Should be cached already
+    c3.getStatement(c1['white']) # Should be cached already
 
     assert 'a' != c1
     assert c1 == c2 == c3
 
 def test_tx_methods():
-    tx = list(common_client_instance['black'].cached_statement.values())[0]
+    tx = list(common_client_instance['white'].cached_statement.values())[0]
     assert tx.next > tx[-1].time
     assert  iter(tx)
 

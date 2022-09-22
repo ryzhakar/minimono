@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import (
     Any,
     Dict,
@@ -6,7 +7,6 @@ from typing import (
     Union,
     Optional
     )
-from datetime import datetime, timedelta, timezone
 from typing_extensions import Self
 from pydantic import(
     BaseModel,
@@ -15,6 +15,8 @@ from pydantic import(
     root_validator,
     validator
     )
+from datetime import datetime, timedelta, timezone
+from abc import ABC, abstractmethod
 from .enumerators import CardType, CashbackType, CurrencyCode, enum_encoders
 from ..abstract.caller_elements import BadRequest
 from .utility import (
@@ -23,6 +25,11 @@ from .utility import (
     construct_bucket_list,
     TIMEBLOCK
     )
+
+class Path(ABC): # pragma: no cover
+    @abstractmethod
+    def get_path_tail(self) -> str: # pragma: no cover
+        pass
 
 
 class HeadersPrivate(BaseModel):
@@ -33,7 +40,7 @@ class HeadersPrivate(BaseModel):
     x_token: str = Field(alias="X-Token", title="X-Token")
 
 
-class StatementReq(BaseModel):
+class StatementReq(BaseModel, Path):
     class Config:
         json_encoders=enum_encoders
 
@@ -63,23 +70,21 @@ class StatementReq(BaseModel):
         return values
     
     def get_path_tail(self):
-        fr = str(int(self.from_.timestamp())) # type: ignore
-        to = str(int(self.to_.timestamp())) # type: ignore
+        fr = str(int(self.from_.timestamp())) # type: ignore (set in validation)
+        to = str(int(self.to_.timestamp())) # type: ignore (set in validation)
         ac = self.account
         return f'/personal/statement/{ac}/{fr}/{to}'
 
 
-class UserInfoReq:
+class UserInfoReq(Path):
 
-    @staticmethod
-    def get_path_tail():
+    def get_path_tail(self):
         return '/personal/client-info'
 
 
-class CurrRateReq:
+class CurrRateReq(Path):
 
-    @staticmethod
-    def get_path_tail():
+    def get_path_tail(self):
         return '/bank/currency'
     
 
@@ -181,19 +186,6 @@ class Statement(BaseModel):
 
         return {item.id: item for item in self.transactions}
     
-class Jar(BaseModel):
-    class Config:
-        json_encoders=enum_encoders
-
-    id: str
-    sendId: str
-    title: str
-    currencyCode: CurrencyCode
-    balance: int
-    description: Optional[str] = None
-    goal: Optional[int] = None
-
-
 class TxBucket(BaseModel):
     class Config:
         json_encoders=enum_encoders
@@ -225,43 +217,15 @@ class TxBucket(BaseModel):
 
         return self.transactions[index]
 
-
-class Account(BaseModel):
+class CacheableTransactionProvider(BaseModel):
     class Config:
         json_encoders=enum_encoders
-
+    
     id: str
     balance: int
-    creditLimit: int
-    type: CardType
     currencyCode: CurrencyCode
-    cashbackType: CashbackType
     cached_statement: Dict[str, TxBucket] = dict()
 
-    @root_validator(pre=True)
-    def coerce_right_type(cls, keywords: Dict) -> Dict:
-        curr = {
-            980: CardType.black,
-            978: CardType.eur,
-            840: CardType.usd,
-        }
-        setters = {
-            "black": lambda x: curr[x['currencyCode']],
-            "white": lambda x: CardType.white,
-            "platinum": lambda x: CardType.platinum,
-            "iron": lambda x: CardType.iron,
-            "fop": lambda x: CardType.fop,
-            "yellow": lambda x: CardType.yellow,
-            "eAid": lambda x: CardType.eAid,
-            "eur": lambda x: CardType.eur,
-            "usd": lambda x: CardType.usd,
-        }
-        curr_type = keywords['type']
-        type_retriever = setters[curr_type]
-        valid_type = type_retriever(keywords)
-        keywords['type'] = valid_type
-        return keywords
-    
     def getStatement(
         self,
         engine_instance,
@@ -308,6 +272,50 @@ class Account(BaseModel):
         whole_statement.sort(key=lambda x: x.time)
 
         return Statement(transactions=whole_statement, timeframe=(fr, to))
+
+
+class Jar(CacheableTransactionProvider):
+    class Config:
+        json_encoders=enum_encoders
+
+    sendId: str
+    title: str
+    description: Optional[str] = None
+    goal: Optional[int] = None
+
+
+class Account(CacheableTransactionProvider):
+    class Config:
+        json_encoders=enum_encoders
+
+    creditLimit: int
+    type: CardType
+    cashbackType: CashbackType
+
+    @root_validator(pre=True)
+    def coerce_right_type(cls, keywords: Dict) -> Dict:
+        curr = {
+            980: CardType.black,
+            978: CardType.eur,
+            840: CardType.usd,
+        }
+        setters = {
+            "black": lambda x: curr[x['currencyCode']],
+            "white": lambda x: CardType.white,
+            "platinum": lambda x: CardType.platinum,
+            "iron": lambda x: CardType.iron,
+            "fop": lambda x: CardType.fop,
+            "yellow": lambda x: CardType.yellow,
+            "eAid": lambda x: CardType.eAid,
+            "eur": lambda x: CardType.eur,
+            "usd": lambda x: CardType.usd,
+        }
+        curr_type = keywords['type']
+        type_retriever = setters[curr_type]
+        valid_type = type_retriever(keywords)
+        keywords['type'] = valid_type
+        return keywords
+    
 
 class User(BaseModel):
     class Config:
