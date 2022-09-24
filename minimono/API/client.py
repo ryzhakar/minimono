@@ -15,8 +15,14 @@ class Client:
             f.write(jsonified)
 
     def loadFile(self, file_name: str):
-        with open(file_name, "r") as f:
-            self.user = models.User.parse_raw(f.read())
+        try:
+            valid_extension = file_name.endswith(".json")
+            if not valid_extension:
+                raise FileNotFoundError
+            with open(file_name, "r") as f:
+                self.user = models.User.parse_raw(f.read())
+        except FileNotFoundError as e:
+            raise e
 
     def refreshUser(self):
         """Refresh user info from API. Loses cached accounts."""
@@ -33,7 +39,7 @@ class Client:
         """Initialize clients request engine."""
 
         self.engine = engine_class(token, self_ratelimit=avoid_ratelimiting)
-        if load_file is not None:
+        if load_file:
             self.loadFile(load_file)
         else:
             self.refreshUser()
