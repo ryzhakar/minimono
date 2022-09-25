@@ -17,7 +17,7 @@ class CashbackType(str, Enum):
     miles = "Miles"
 
 class CurrencyCode(int, Enum):
-    black = 980
+    uah = 980
     eur = 978
     usd = 840
 
