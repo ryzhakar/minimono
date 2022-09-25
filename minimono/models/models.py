@@ -128,40 +128,17 @@ class Transaction(BaseModel):
     def __hash__(self):
         return hash(self.id)
 
-class Statement(BaseModel):
+
+class TransactionArray(BaseModel):
+
     class Config:
         json_encoders=enum_encoders
 
-    """:timeframe: represents the REAL range of dates in the statement,
-    not necessarily the range of dates in the request.
-    """
-
     transactions: Sequence[Transaction]
-    timeframe: Sequence[datetime] = Field(default_factory=list)
 
-    @root_validator
-    def set_timeframe(cls, values: dict) -> dict:
-        """Deduce the timeframe from the transactions."""
-        if values['transactions']:
-            start = values['transactions'][0].time
-            end = values['transactions'][-1].time
-            values['timeframe'] = (start, end)
-        return values
-
-    def __len__(self) -> int:
+    def __len__(self):
         return len(self.transactions)
-        
-    def __add__(self, other: Union[Self, 'Transaction']) -> Self:
-        """Add two statements."""
-        if isinstance(other, type(self)):
-            tx = list(self.transactions) + list(other.transactions)
-        elif isinstance(other, Transaction):
-            tx = list(self.transactions) + [other,]
-        else:
-            raise TypeError("Can only add Transaction or Statement to Statement")
-        tx.sort(key=lambda x: x.time)
-        return Statement(transactions=tx)
-
+    
     def __iter__(self) -> Iterator[Transaction]:
         """Returns an iterator over the transactions."""
 
@@ -175,19 +152,51 @@ class Statement(BaseModel):
     def __hash__(self):
         return hash(tuple(self.transactions))
 
+
+class Statement(TransactionArray):
+    """:timeframe: represents the REAL range of dates in the statement,
+    not necessarily the range of dates in the request.
+    """
+
+    class Config:
+        json_encoders=enum_encoders
+
+
+    timeframe: Sequence[datetime] = Field(default_factory=list)
+
+    @root_validator
+    def set_timeframe(cls, values: dict) -> dict:
+        """Deduce the timeframe from the transactions."""
+        if values['transactions']:
+            start = values['transactions'][0].time
+            end = values['transactions'][-1].time
+            values['timeframe'] = (start, end)
+        return values
+        
+    def __add__(self, other: Union[Self, 'Transaction']) -> Self:
+        """Add two statements."""
+        if isinstance(other, type(self)):
+            tx = list(self.transactions) + list(other.transactions)
+        elif isinstance(other, Transaction):
+            tx = list(self.transactions) + [other,]
+        else:
+            raise TypeError("Can only add Transaction or Statement to Statement")
+        tx.sort(key=lambda x: x.time)
+        return Statement(transactions=tx)
+
     def to_dict(self) -> dict:
         """Returns a dictionary with Transaction ids as keys and Transaction objects as values."""
 
         return {item.id: item for item in self.transactions}
     
-class TxBucket(BaseModel):
+class TxBucket(TransactionArray):
+    """Statements with defined timeframe length for caching purposes."""
     class Config:
         json_encoders=enum_encoders
 
-    """Statements with defined timeframe length for caching purposes."""
 
     date: datetime
-    transactions: Sequence[Transaction]
+
     
     @validator("date")
     def align_datetime(cls, v) -> datetime:
@@ -201,15 +210,6 @@ class TxBucket(BaseModel):
 
         return self.date + TIMEBLOCK
 
-    def __iter__(self) -> Iterator[Transaction]:
-        """Returns an iterator over the transactions."""
-
-        return iter(self.transactions)
-
-    def __getitem__(self, index: int) -> Transaction:
-        """Returns a transaction by index."""
-
-        return self.transactions[index]
 
 class CacheableTransactionProvider(BaseModel):
     class Config:
